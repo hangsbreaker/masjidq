@@ -29,10 +29,19 @@ if (isset($_POST['rad'])) {
     exit;
 } else if (isset($_POST['kegiatan'])) {
     $data = array();
-    $id = $_POST['kegiatan'];
+    $id = mysqli_real_escape_string($con, $_POST['kegiatan']);
     $sql = mysqli_query($con, "SELECT * FROM jadwal WHERE id_masjid=" . $id . " order by tanggal desc, jam desc limit 500");
     while ($d = mysqli_fetch_object($sql)) {
         array_push($data, $d);
+    }
+    echo json_encode($data);
+    exit;
+} else if (isset($_POST['searchTerm'])) {
+    $data = array();
+    $term = mysqli_real_escape_string($con, strtolower($_POST['searchTerm']));
+    $sql = mysqli_query($con, "SELECT * FROM masjid WHERE concat(nama,' ',alamat) like '%" . $term . "%' limit 20");
+    while ($d = mysqli_fetch_object($sql)) {
+        array_push($data, array("id" => $d->id, "text" => $d->nama, "data" => $d));
     }
     echo json_encode($data);
     exit;
@@ -52,6 +61,7 @@ if (isset($_POST['rad'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.1.1/css/leaflet-sidebar.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <style>
         body {
             padding: 0;
@@ -103,6 +113,7 @@ if (isset($_POST['rad'])) {
             font-size: 20px;
             border-left: 1px solid #ddd;
             height: 25px;
+            z-index: 1;
         }
 
         #wcari input {
@@ -121,8 +132,8 @@ if (isset($_POST['rad'])) {
             border: none;
             padding: 0px;
             right: 12px;
-            top: 0px;
-            font-size: 30px;
+            top: 12px;
+            font-size: 20px !important;
             background: #fff;
             color: #aaa;
         }
@@ -189,13 +200,81 @@ if (isset($_POST['rad'])) {
             top: -5px;
             color: #888;
         }
+
+        /* select 2 */
+
+        .select2-results__message,
+        .select2-selection__arrow {
+            display: none;
+        }
+
+        .select2-selection,
+        .select2-search__field {
+            outline: none;
+        }
+
+        .select2-container--default {
+            font-size: 14px;
+            border-radius: 10px;
+            outline: none;
+            border: none;
+            background: #ffffff;
+            box-shadow: 0px 0px 10px 0px #aaa;
+            padding: 8px 50px 8px 15px;
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: none;
+        }
+
+        .select2-dropdown--below {
+            top: -42px;
+            z-index: 11111;
+            padding: 0px;
+            margin: 0px;
+            background: transparent;
+            border: none;
+        }
+
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: none;
+            width: 335px;
+            padding: 6px 50px 6px 15px;
+        }
+
+        .select2-results__options {
+            position: relative;
+            background: #ffffff;
+            top: -5px;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0px 5px 8px 0px #aaa;
+        }
+
+        .select2-selection__clear {
+            position: absolute;
+            outline: none;
+            border: none;
+            padding: 0px;
+            right: -9px;
+            top: 0px;
+            font-size: 28px !important;
+            background-color: #ffffff !important;
+            color: #aaa;
+            z-index: 1;
+            height: 44px !important;
+            width: 25px;
+        }
     </style>
 </head>
 
 <body translate="no">
+
     <div id="wcari">
-        <input type="text" id="cari" placeholder="Cari Masjid" />
-        <button type="button" id="clrbtn" onclick="clrcari()">&times;</button>
+
+        <!-- input type="text" id="cari" name="cari" placeholder="Cari Masjid" /-->
+        <select id="caridata" name="caridata" style="width: 390px;"></select>
+        <i class="fas fa-search" id="clrbtn"></i>
     </div>
     <div id="map"></div>
     <div id="detail">
@@ -229,15 +308,15 @@ if (isset($_POST['rad'])) {
 
                     <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="keterangan-tab" data-toggle="tab" href="#keterangan" role="tab" aria-controls="keterangan" aria-selected="true">Profil</a>
+                            <a class="nav-link active" id="kegiatan-tab" data-toggle="tab" href="#kegiatan" role="tab" aria-controls="kegiatan" aria-selected="true">Kegiatan</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="kegiatan-tab" data-toggle="tab" href="#kegiatan" role="tab" aria-controls="kegiatan" aria-selected="false">Kegiatan</a>
+                            <a class="nav-link" id="keterangan-tab" data-toggle="tab" href="#keterangan" role="tab" aria-controls="keterangan" aria-selected="false">Profil</a>
                         </li>
                     </ul>
                     <div class="tab-content" id="myTabContent">
-                        <div class="tab-pane fade show active" id="keterangan" role="tabpanel" aria-labelledby="keterangan-tab"></div>
-                        <div class="tab-pane fade" id="kegiatan" role="tabpanel" aria-labelledby="kegiatan-tab"></div>
+                        <div class="tab-pane fade show active" id="kegiatan" role="tabpanel" aria-labelledby="kegiatan-tab"></div>
+                        <div class="tab-pane fade" id="keterangan" role="tabpanel" aria-labelledby="keterangan-tab"></div>
                     </div>
 
                 </div>
@@ -251,7 +330,45 @@ if (isset($_POST['rad'])) {
     <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.1.1/js/leaflet-sidebar.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script id="rendered-js">
+        $(document).ready(function() {
+
+            $("#caridata").select2({
+                allowClear: true,
+                placeholder: "Cari",
+                minimumInputLength: 1,
+                ajax: {
+                    url: window.location.pathname,
+                    type: "post",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            searchTerm: params.term // search term
+                        };
+                    },
+                    processResults: function(response) {
+                        // console.log(response);
+                        return {
+                            results: response
+                        };
+                    },
+                    cache: true
+                }
+            });
+            $('#caridata').on('select2:select', function(e) {
+                var data = e.params.data;
+                console.log(data);
+                map.panTo(new L.LatLng(data.data.lat, data.data.lng));
+                markClick(data.data);
+            });
+
+            $('#caridata').on('select2:open', function(e) {
+                $('#caridata').val(null).trigger("change");
+            });
+        });
+
         // Move to Coor
         // map.panTo(new L.LatLng(-7.453751892045342, 112.70092964172363));
         // Make Circle
@@ -358,7 +475,7 @@ if (isset($_POST['rad'])) {
                 $('#wwebsite').css("display", "flex");
             }
             $('#keterangan').html(id['keterangan']);
-            $('#myTab a[href="#keterangan"]').tab('show');
+            $('#myTab a[href="#kegiatan"]').tab('show');
 
             getKegiatan(id['id']);
         }
@@ -380,7 +497,7 @@ if (isset($_POST['rad'])) {
                 success: function(data) {
                     // console.log(data);
                     var d = JSON.parse(data);
-                    console.log(d);
+                    // console.log(d);
                     placeMark(d);
                 }
             });
@@ -425,9 +542,6 @@ if (isset($_POST['rad'])) {
         }
 
         // ================================================================================
-        function clrcari() {
-            $('#cari').val("");
-        }
     </script>
 </body>
 
