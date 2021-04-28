@@ -1,2 +1,2 @@
 # masjidq
-Map masjid dengan leaflet
+Map tempat ibadah dengan leaflet
