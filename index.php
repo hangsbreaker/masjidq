@@ -1,16 +1,5 @@
 <?php
-$dbhost = 'localhost';
-$dbuser = 'root';
-$dbpass = '';
-$dbname = 'masjidq';
-
-$con = mysqli_connect($dbhost, $dbuser, $dbpass);
-mysqli_select_db($con, $dbname);
-// let me know if the connection fails
-if (!$con) {
-    print("Connection Failed.");
-    exit;
-}
+include "jimat.php";
 
 if (isset($_POST['rad'])) {
     // print_r($_POST);
@@ -21,7 +10,7 @@ if (isset($_POST['rad'])) {
         $rd[$k] = preg_replace("/[^0-9\.-]/", "", $r);
     }
     $data = array();
-    $sql = mysqli_query($con, "SELECT * FROM masjid WHERE (lat <= " . $rd[0] . " AND lat >= " . $rd[1] . ") AND (lng <= " . $rd[2] . " AND lng >= " . $rd[3] . ")");
+    $sql = mysqli_query($c, "SELECT * FROM masjid WHERE (lat <= " . $rd[0] . " AND lat >= " . $rd[1] . ") AND (lng <= " . $rd[2] . " AND lng >= " . $rd[3] . ")");
     while ($d = mysqli_fetch_object($sql)) {
         array_push($data, $d);
     }
@@ -29,8 +18,8 @@ if (isset($_POST['rad'])) {
     exit;
 } else if (isset($_POST['kegiatan'])) {
     $data = array();
-    $id = mysqli_real_escape_string($con, $_POST['kegiatan']);
-    $sql = mysqli_query($con, "SELECT * FROM jadwal WHERE id_masjid=" . $id . " order by tanggal desc, jam desc limit 500");
+    $id = mysqli_real_escape_string($c, $_POST['kegiatan']);
+    $sql = mysqli_query($c, "SELECT * FROM jadwal WHERE id_masjid=" . $id . " order by tanggal desc, jam desc limit 500");
     while ($d = mysqli_fetch_object($sql)) {
         array_push($data, $d);
     }
@@ -38,8 +27,8 @@ if (isset($_POST['rad'])) {
     exit;
 } else if (isset($_POST['searchTerm'])) {
     $data = array();
-    $term = mysqli_real_escape_string($con, strtolower($_POST['searchTerm']));
-    $sql = mysqli_query($con, "SELECT * FROM masjid WHERE concat(nama,' ',alamat) like '%" . $term . "%' limit 20");
+    $term = mysqli_real_escape_string($c, strtolower($_POST['searchTerm']));
+    $sql = mysqli_query($c, "SELECT * FROM masjid WHERE concat(nama,' ',alamat) like '%" . $term . "%' limit 20");
     while ($d = mysqli_fetch_object($sql)) {
         array_push($data, array("id" => $d->id, "text" => $d->nama, "data" => $d));
     }

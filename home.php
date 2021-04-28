@@ -1,17 +1,5 @@
 <?php
-session_start();
-$dbhost = 'localhost';
-$dbuser = 'root';
-$dbpass = '';
-$dbname = 'masjidq';
-
-$con = mysqli_connect($dbhost, $dbuser, $dbpass);
-mysqli_select_db($con, $dbname);
-// let me know if the connection fails
-if (!$con) {
-    print("Connection Failed.");
-    exit;
-}
+include "jimat.php";
 
 if (!isset($_SESSION['username'])) {
     // login first
@@ -20,17 +8,17 @@ if (!isset($_SESSION['username'])) {
 }
 // admin page
 $username = $_SESSION['username'];
-$bio = mysqli_fetch_object(mysqli_query($con, "select * from user where username='" . $username . "'"));
+$bio = mysqli_fetch_object(mysqli_query($c, "select * from user where username='" . $username . "'"));
 
 if (isset($_POST['NamaMasjid'])) {
-    $nama = mysqli_real_escape_string($con, $_POST['NamaMasjid']);
-    $alamat = mysqli_real_escape_string($con, $_POST['Alamat']);
-    $lat = mysqli_real_escape_string($con, $_POST['Latitude']);
-    $lng = mysqli_real_escape_string($con, $_POST['Longitude']);
-    $telepon = mysqli_real_escape_string($con, $_POST['Telepon']);
-    $website = mysqli_real_escape_string($con, $_POST['Website']);
-    $keterangan = mysqli_real_escape_string($con, $_POST['Profil']);
-    mysqli_query($con, "update masjid set nama='" . $nama . "', alamat='" . $alamat . "', lat='" . $lat . "', lng='" . $lng . "', telepon='" . $telepon . "', website='" . $website . "', keterangan='" . $keterangan . "' where id='" . $bio->id_masjid . "'");
+    $nama = mysqli_real_escape_string($c, $_POST['NamaMasjid']);
+    $alamat = mysqli_real_escape_string($c, $_POST['Alamat']);
+    $lat = mysqli_real_escape_string($c, $_POST['Latitude']);
+    $lng = mysqli_real_escape_string($c, $_POST['Longitude']);
+    $telepon = mysqli_real_escape_string($c, $_POST['Telepon']);
+    $website = mysqli_real_escape_string($c, $_POST['Website']);
+    $keterangan = mysqli_real_escape_string($c, $_POST['Profil']);
+    mysqli_query($c, "update masjid set nama='" . $nama . "', alamat='" . $alamat . "', lat='" . $lat . "', lng='" . $lng . "', telepon='" . $telepon . "', website='" . $website . "', keterangan='" . $keterangan . "' where id='" . $bio->id_masjid . "'");
 
     header('location:home.php');
     exit;
@@ -159,7 +147,7 @@ include "atable.php";
             buildform("profilmasjid", masjid, "ID");
 
             <?php
-            $mj = mysqli_fetch_object(mysqli_query($con, "select * from masjid where id='" . $bio->id_masjid . "'"));
+            $mj = mysqli_fetch_object(mysqli_query($c, "select * from masjid where id='" . $bio->id_masjid . "'"));
             echo '$("#NamaMasjid").val("' . $mj->nama . '");';
             echo '$("#Alamat").val("' . $mj->alamat . '");';
             echo '$("#Latitude").val("' . $mj->lat . '");';
