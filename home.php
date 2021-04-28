@@ -22,6 +22,28 @@ if (isset($_POST['NamaMasjid'])) {
 
     header('location:home.php');
     exit;
+} else if (isset($_POST['Username'])) {
+    $nama = mysqli_real_escape_string($c, $_POST['NamaLengkap']);
+    $hp = mysqli_real_escape_string($c, $_POST['TeleponHP']);
+    $email = mysqli_real_escape_string($c, $_POST['Email']);
+    $alamat = mysqli_real_escape_string($c, $_POST['AlamatLengkap']);
+    mysqli_query($c, "update user set nama='" . $nama . "', alamat='" . $alamat . "', hp='" . $hp . "', email='" . $email . "' where username='" . $username . "'");
+
+    header('location:home.php');
+    exit;
+} else if (isset($_POST['PasswordLama'])) {
+    $pass = sha1(md5(sha1(mysqli_real_escape_string($c, $_POST['PasswordLama']))));
+
+    $ada = mysqli_num_rows(mysqli_query($c, "select * from user where username='" . $username . "' and password='" . $pass . "'"));
+    if ($ada == 1) {
+        $passbaru = sha1(md5(sha1(mysqli_real_escape_string($c, $_POST['PasswordBaru']))));
+        $passbarur = sha1(md5(sha1(mysqli_real_escape_string($c, $_POST['UlangiPasswordBaru']))));
+        if ($passbaru == $passbarur) {
+            mysqli_query($c, "update user set password='" . $passbaru . "' where username='" . $username . "'");
+        }
+    }
+    header('location:home.php');
+    exit;
 }
 
 include "atable.php";
@@ -42,13 +64,28 @@ include "atable.php";
     <link href="http://hangsbreaker.github.io/formbuilder/lib/css/formbuilder.css" rel="stylesheet" />
     <script src='http://hangsbreaker.github.io/formbuilder/lib/js/jquery.1.12.4.min.js'></script>
     <?php atable_init(); ?>
+    <style>
+        #profilmasjid,
+        #profiluser,
+        #setpassword {
+            margin-top: 50px;
+            margin-bottom: 100px;
+        }
+
+        #submit {
+            float: right;
+        }
+
+        .atble tr:first-child td {
+            display: none;
+        }
+
+        #dtblatable0 th:nth-child(1),
+        #dtblatable0 td:nth-child(1) {
+            display: none;
+        }
+    </style>
 </head>
-<style>
-    #profilmasjid {
-        margin-top: 50px;
-        margin-bottom: 50px;
-    }
-</style>
 
 <body>
     <nav class="navbar navbar-default">
@@ -70,7 +107,7 @@ include "atable.php";
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $bio->nama; ?> <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="#profil"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;Profil</a></li>
+                            <li><a href="#" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;Profil</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="logout.php"><span class="glyphicon glyphicon-off" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;Logout</a></li>
                         </ul>
@@ -131,20 +168,30 @@ include "atable.php";
 
         </div>
     </div>
-    <style>
-        .atble tr:first-child td {
-            display: none;
-        }
 
-        #dtblatable0 th:nth-child(1),
-        #dtblatable0 td:nth-child(1) {
-            display: none;
-        }
-    </style>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <form id="profiluser" method="post" action=""></form>
+                    <hr>
+                    <form id="setpassword" method="post" action=""></form>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         $(document).ready(function() {
             const masjid = '{"title":"Data Masjid","description":"","form":[{"type":"text","question":"Nama Masjid","description":"","required":true,"data":[]},{"type":"textarea","question":"Alamat","description":"","required":true,"data":[]},{"type":"text","question":"Latitude","description":"","required":true,"data":[]},{"type":"text","question":"Longitude","description":"","required":true,"data":[]},{"type":"text","question":"Telepon","description":"","required":false,"data":[]},{"type":"text","question":"Website","description":"","required":false,"data":[]},{"type":"textarea","question":"Profil","description":"","required":false,"data":[]}]}';
             buildform("profilmasjid", masjid, "ID");
+
+            const user = '{"title":"Profil User","description":"","form":[{"type":"text","question":"Username","description":"","required":true,"data":[]},{"type":"text","question":"Nama Lengkap","description":"","required":true,"data":[]},{"type":"text","question":"Telepon / HP","description":"","required":true,"data":[]},{"type":"text","question":"Email","description":"","required":false,"data":[]},{"type":"textarea","question":"Alamat Lengkap","description":"","required":false,"data":[]}]}';
+            buildform("profiluser", user, "ID");
+
+            const setpass = '{"title":"Rubah Password","description":"","form":[{"type":"password","question":"Password Lama","description":"","required":true,"data":[]},{"type":"password","question":"Password Baru","description":"","required":true,"data":[]},{"type":"password","question":"Ulangi Password Baru","description":"","required":true,"data":[]}]}';
+            buildform("setpassword", setpass, "ID");
 
             <?php
             $mj = mysqli_fetch_object(mysqli_query($c, "select * from masjid where id='" . $bio->id_masjid . "'"));
@@ -155,6 +202,14 @@ include "atable.php";
             echo '$("#Telepon").val("' . $mj->telepon . '");';
             echo '$("#Website").val("' . $mj->website . '");';
             echo '$("#Profil").val(' . json_encode($mj->keterangan) . ');';
+
+
+            echo '$("#Username").val("' . $bio->username . '");';
+            echo '$("#Username").attr("readonly", "readonly");';
+            echo '$("#NamaLengkap").val("' . $bio->nama . '");';
+            echo '$("#TeleponHP").val("' . $bio->hp . '");';
+            echo '$("#Email").val("' . $bio->email . '");';
+            echo '$("#AlamatLengkap").val("' . $bio->alamat . '");';
             ?>
         });
 
