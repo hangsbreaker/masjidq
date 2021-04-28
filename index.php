@@ -28,7 +28,8 @@ if (isset($_POST['rad'])) {
 } else if (isset($_POST['searchTerm'])) {
     $data = array();
     $term = mysqli_real_escape_string($c, strtolower($_POST['searchTerm']));
-    $sql = mysqli_query($c, "SELECT * FROM masjid WHERE concat(nama,' ',alamat) like '%" . $term . "%' limit 20");
+    $sql = mysqli_query($c, "SELECT m.id, m.nama, m.alamat, m.lat, m.lng, m.telepon, m.website, m.keterangan FROM masjid m left join jadwal j on m.id=j.id_masjid WHERE concat(m.nama,' ',m.alamat) like '%" . $term . "%' or concat(j.kegiatan,' ',j.pemateri) like '%" . $term . "%'
+    group by m.nama limit 20");
     while ($d = mysqli_fetch_object($sql)) {
         array_push($data, array("id" => $d->id, "text" => $d->nama, "data" => $d));
     }
@@ -70,6 +71,26 @@ if (isset($_POST['rad'])) {
 
         #sidebar {
             height: 90px;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #aaa;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
 
         /* Customise Zoom Controls */
@@ -203,14 +224,19 @@ if (isset($_POST['rad'])) {
             padding-top: 15px;
         }
 
+        .keg {
+            line-height: 1.3;
+        }
+
         .keg label {
+            font-weight: bold;
             margin-bottom: 0px;
         }
 
         .keg small {
             position: relative;
             top: -5px;
-            color: #888;
+            color: #000;
         }
 
         /* select 2 */
@@ -581,15 +607,40 @@ if (isset($_POST['rad'])) {
                     // console.log(data);
                     var d = JSON.parse(data);
                     for (i in d) {
-                        $('#kegiatan').append('<div class="form-group keg"><label>' + d[i]['kegiatan'] + '</label><br><small>' + ftgl(d[i]['tanggal']) + ' ' + d[i]['jam'] + '</small></div><hr>');
+                        var kebutuhan = '';
+                        var keterangan = '';
+                        var oleh = (d[i]['pemateri'] != "") ? "<br>Oleh: " + d[i]['pemateri'] : "";
+                        if (d[i]['kebutuhan'] > 0) {
+                            kebutuhan = '<br><table width="100%"><tr><th>Kebutuhan</th><th>Terkumpul</th><th>Kurang</th></tr>' +
+                                '<tr><td>' + numformat(d[i]['kebutuhan']) + '</td><td>' + numformat(d[i]['terkumpul']) + '</td><td>' + numformat(Math.abs(d[i]['kebutuhan'] - d[i]['terkumpul'])) + '</td></tr></table>';
+                        }
+                        if (d[i]['keterangan'] != "") {
+                            keterangan = '<br><small>' + d[i]['keterangan'] + '</small>';
+                        }
+                        $('#kegiatan').append('<div class="form-group keg"><label>' + ftgl(d[i]['tanggal']) + ' ' + d[i]['jam'] + '</label><br><i style="color: #1a73e8;font-weight:bold;">' + d[i]['kegiatan'] + '</i>' + oleh + keterangan + kebutuhan + '</div><hr>');
                     }
                 }
             });
         }
 
         function ftgl(t) {
+            var myDate = new Date(t);
+
+            var weekday = new Array(7);
+            weekday[0] = "Minggu";
+            weekday[1] = "Senin";
+            weekday[2] = "Selasa";
+            weekday[3] = "Rabu";
+            weekday[4] = "Kamis";
+            weekday[5] = "Jum'at";
+            weekday[6] = "Sabtu";
+
             var p = t.split('-');
-            return p[2] + '-' + p[1] + '-' + p[0];
+            return weekday[myDate.getDay()] + ', ' + p[2] + '-' + p[1] + '-' + p[0];
+        }
+
+        function numformat(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
         // ================================================================================
