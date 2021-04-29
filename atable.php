@@ -319,9 +319,11 @@ class Atable
     			<tbody>';
 			$i = 1;
 			$per_page = $limit;
-			$datarecord = $this->db_num_rows($this->db_query($qrytable . " " . $groupby . " " . $where));
+			$existcol = explode(",", $this->GetBetween($qrytable, "select", "from"));
+			$datarecord = $this->db_num_rows($this->db_query("SELECT count(" . trim($existcol[0]) . ") FROM " . $tblnm . " " . $groupby . " " . $where));
 			$jml_pages = ceil($datarecord / $per_page);
 			$pages = 1;
+
 			// get page
 			if (isset($_POST['h'])) {
 				$pages = $_POST['h'];
@@ -1518,7 +1520,7 @@ function atable_init()
 		      ndata[cols[i]]=rows[i+nm].replace("&nbsp;","");
 				}
 	    }
-	    $.post(thepage,{process_table:ntbl,vdata:vdata, ndata:ndata, atable_process_data:prc},function(data){//console.log(data);
+	    $.post(thepage,{process_table:ntbl,vdata:vdata, ndata:ndata, atable_process_data:prc},function(data){console.log(data);
 	      if(data.includes("atable_process_true")){
 	        if(prc=="delete" || prc=="add"){frm.style.display="none";}
 	        if(prc!="add"){
