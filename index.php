@@ -551,7 +551,7 @@ if (isset($_POST['rad'])) {
                 $('#website').html(web);
                 $('#wwebsite').css("display", "flex");
             }
-            $('#keterangan').html(id['keterangan'].replaceAll("\n", "<br>"));
+            $('#keterangan').html(linkify(id['keterangan'].replaceAll("\n", "<br>")));
             $('#myTab a[href="#kegiatan"]').tab('show');
 
             getKegiatan(id['id']);
@@ -615,7 +615,7 @@ if (isset($_POST['rad'])) {
                                 '<tr><td>' + numformat(d[i]['kebutuhan']) + '</td><td>' + numformat(d[i]['terkumpul']) + '</td><td>' + numformat(Math.abs(d[i]['kebutuhan'] - d[i]['terkumpul'])) + '</td></tr></table>';
                         }
                         if (d[i]['keterangan'] != "") {
-                            keterangan = '<br><small>' + d[i]['keterangan'] + '</small>';
+                            keterangan = '<br><small>' + linkify(d[i]['keterangan']) + '</small>';
                         }
                         $('#kegiatan').append('<div class="form-group keg"><label>' + ftgl(d[i]['tanggal']) + ' ' + d[i]['jam'] + '</label><br><i style="color: #1a73e8;font-weight:bold;">' + d[i]['kegiatan'] + '</i>' + oleh + keterangan + kebutuhan + '</div><hr>');
                     }
@@ -641,6 +641,27 @@ if (isset($_POST['rad'])) {
 
         function numformat(x) {
             return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function linkify(inputText) {
+            var replacedText, replacePattern1, replacePattern2, replacePattern3;
+            replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+            replacedText = inputText.replace(
+                replacePattern1,
+                '<a href="$1" target="_blank">$1</a>'
+            );
+            replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            replacedText = replacedText.replace(
+                replacePattern2,
+                '$1<a href="http://$2" target="_blank">$2</a>'
+            );
+            replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+            replacedText = replacedText.replace(
+                replacePattern3,
+                '<a href="mailto:$1">$1</a>'
+            );
+
+            return replacedText;
         }
 
         // ================================================================================
