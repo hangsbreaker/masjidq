@@ -47,6 +47,7 @@ if (isset($_POST['NamaMasjid'])) {
 }
 
 include "atable.php";
+$mj = mysqli_fetch_object(mysqli_query($c, "select * from masjid where id='" . $bio->id_masjid . "'"));
 ?>
 
 <!DOCTYPE html>
@@ -65,6 +66,14 @@ include "atable.php";
     <script src='http://hangsbreaker.github.io/formbuilder/lib/js/jquery.1.12.4.min.js'></script>
     <?php atable_init(); ?>
     <style>
+        #nmmasjid {
+            margin: 0px auto;
+            font-size: 24px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
         #profilmasjid,
         #profiluser,
         #setpassword {
@@ -118,7 +127,11 @@ include "atable.php";
     </nav>
     <div class="container">
         <div>
-
+            <div id="nmmasjid">
+                <?php
+                echo $mj->nama;
+                ?>
+            </div>
             <!-- Nav tabs -->
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Jadwal Kegiatan</a></li>
@@ -194,7 +207,6 @@ include "atable.php";
             buildform("setpassword", setpass, "ID");
 
             <?php
-            $mj = mysqli_fetch_object(mysqli_query($c, "select * from masjid where id='" . $bio->id_masjid . "'"));
             echo '$("#NamaMasjid").val("' . $mj->nama . '");';
             echo '$("#Alamat").val("' . $mj->alamat . '");';
             echo '$("#Latitude").val("' . $mj->lat . '");';
